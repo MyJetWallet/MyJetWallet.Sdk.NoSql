@@ -5,7 +5,7 @@ using MyNoSqlServer.DataReader;
 
 namespace MyJetWallet.Sdk.NoSql
 {
-    public static class AutofacHelper
+    public static class AutofacNoSqlHelper
     {
         public static MyNoSqlTcpClient CreateNoSqlClient(this ContainerBuilder builder, Func<string> readerUrl)
         {
