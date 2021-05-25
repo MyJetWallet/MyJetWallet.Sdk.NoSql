@@ -9,10 +9,10 @@ namespace MyJetWallet.Sdk.NoSql
 {
     public static class AutofacNoSqlHelper
     {
-        public static MyNoSqlTcpClient CreateNoSqlClient(this ContainerBuilder builder, Func<string> readerUrl)
+        public static MyNoSqlTcpClient CreateNoSqlClient(this ContainerBuilder builder, Func<string> readerHostPort)
         {
             var myNoSqlClient = new MyNoSqlTcpClient(
-                readerUrl,
+                readerHostPort,
                 ApplicationEnvironment.HostName ??
                 $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
 
@@ -24,16 +24,29 @@ namespace MyJetWallet.Sdk.NoSql
             return myNoSqlClient;
         }
 
-        public static ContainerBuilder RegisterMyNoSqlWriter<T>(this ContainerBuilder builder, Func<string> writerUrl, string tableName, bool persist = true, 
+        public static IMyNoSqlServerDataWriter<T> RegisterMyNoSqlWriter<T>(this ContainerBuilder builder, Func<string> writerUrl, string tableName, bool persist = true, 
             DataSynchronizationPeriod dataSynchronizationPeriod = DataSynchronizationPeriod.Sec5) where T: IMyNoSqlDbEntity, new()
         {
+            var writer = new MyNoSqlServerDataWriter<T>(writerUrl, tableName, persist, dataSynchronizationPeriod);
+
             builder
-                .RegisterInstance(new MyNoSqlServerDataWriter<T>(
-                    writerUrl, tableName, persist, dataSynchronizationPeriod))
+                .RegisterInstance(writer)
                 .As<IMyNoSqlServerDataWriter<T>>()
                 .SingleInstance();
 
-            return builder;
+            return writer;
+        }
+
+        public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, MyNoSqlTcpClient client, string tableName) where T : IMyNoSqlDbEntity, new()
+        {
+            var reader = new MyNoSqlReadRepository<T>(client, tableName);
+
+            builder
+                .RegisterInstance(reader)
+                .As<IMyNoSqlServerDataReader<T>>()
+                .SingleInstance();
+
+            return reader;
         }
 
 
