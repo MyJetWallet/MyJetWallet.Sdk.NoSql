@@ -1,7 +1,9 @@
 ﻿using System;
 using Autofac;
 using MyJetWallet.Sdk.Service;
+using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
+using MyNoSqlServer.DataWriter;
 
 namespace MyJetWallet.Sdk.NoSql
 {
@@ -20,6 +22,18 @@ namespace MyJetWallet.Sdk.NoSql
 
 
             return myNoSqlClient;
+        }
+
+        public static ContainerBuilder RegisterMyNoSqlWriter<T>(this ContainerBuilder builder, Func<string> writerUrl, string tableName, bool persist = true, 
+            DataSynchronizationPeriod dataSynchronizationPeriod = DataSynchronizationPeriod.Sec5) where T: IMyNoSqlDbEntity, new()
+        {
+            builder
+                .RegisterInstance(new MyNoSqlServerDataWriter<T>(
+                    writerUrl, tableName, persist, dataSynchronizationPeriod))
+                .As<IMyNoSqlServerDataWriter<T>>()
+                .SingleInstance();
+
+            return builder;
         }
 
 
