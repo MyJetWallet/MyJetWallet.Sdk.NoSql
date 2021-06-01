@@ -61,7 +61,7 @@ public class PortfolioTradeNoSql : MyNoSqlDbEntity
         return new SettingsLiquidityConverterNoSql()
         {
             PartitionKey = GeneratePartitionKey(trade.InstrumentSymbol),
-            RowKey = GenerateRowKey(trader.Id),
+            RowKey = GenerateRowKey(trade.Id),
             Trade = trade
         };
     }
