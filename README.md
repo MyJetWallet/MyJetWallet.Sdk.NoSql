@@ -46,7 +46,7 @@ public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 **Model:**
 
 ```csharp
-[DataContract]
+
 public class PortfolioTradeNoSql : MyNoSqlDbEntity
 {
     public const string TableName = "myjetwallet-liquitity-portfoliotrade";
