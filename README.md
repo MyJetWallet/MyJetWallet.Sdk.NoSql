@@ -7,28 +7,13 @@ public class ServiceBusModule : Module
 {
     protected override void Load(ContainerBuilder builder)
     {
-        var serviceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory);
-
-        var queryName = "Liquidity-Reports";
-
-        // publisher
-        builder
-            .RegisterInstance(new MyServiceBusPublisher<PortfolioTrade>(serviceBusClient, PortfolioTrade.TopicName, true))
-            .As<IPublisher<PortfolioTrade>>()
-            .SingleInstance();
-
-
-        // batch subscriber
-        builder
-            .RegisterInstance(new MyServiceBusSubscriber<PortfolioTrade>(serviceBusClient, PortfolioTrade.TopicName, queryName, TopicQueueType.Permanent, true))
-            .As<ISubscriber<IReadOnlyList<PortfolioTrade>>>()
-            .SingleInstance();
-
-        // single subscriber
-        builder
-            .RegisterInstance(new MyServiceBusSubscriber<PortfolioPosition>(serviceBusClient, PortfolioPosition.TopicName, queryName, TopicQueueType.Permanent, false))
-            .As<ISubscriber<PortfolioTrade>>()
-            .SingleInstance();
+        var noSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
+        
+        // register writer (IMyNoSqlServerDataWriter<PortfolioTradeNoSql>)
+        builder.RegisterMyNoSqlWriter<PortfolioTradeNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), PortfolioTradeNoSql.TableName);
+        
+        // register reader (IMyNoSqlServerDataReader<PortfolioTradeNoSql>)
+        builder.RegisterMyNoSqlReader<PortfolioTradeNoSql>(noSqlClient, PortfolioTradeNoSql.TableName);
     }
 }
 ```
@@ -38,22 +23,22 @@ public class ServiceBusModule : Module
 ```csharp
 public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 {
-    private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
+    private readonly MyNoSqlTcpClient _noSqlClient;
 
-    public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, MyServiceBusTcpClient myServiceBusTcpClient)
+    public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, MyNoSqlTcpClient noSqlClient)
         : base(appLifetime)
     {
-        _myServiceBusTcpClient = myServiceBusTcpClient;
+        _noSqlClient = noSqlClient;
     }
 
     protected override void OnStarted()
     {
-        _myServiceBusTcpClient.Start();
+        _noSqlClient.Start();
     }
 
     protected override void OnStopping()
     {
-        _myServiceBusTcpClient.Stop();
+        _noSqlClient.Stop();
     }
 }
 ```
@@ -62,12 +47,23 @@ public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 
 ```csharp
 [DataContract]
-public class PortfolioTrade
+public class PortfolioTradeNoSql : MyNoSqlDbEntity
 {
-    public const string TopicName = "spot-liquidity-engine-trade";
+    public const string TableName = "myjetwallet-liquitity-portfoliotrade";
 
-    [DataMember(Order = 1)] public string TradeId { get; set; }
-    [DataMember(Order = 2)] public string Source { get; set; }
-    [DataMember(Order = 3)] public bool IsInternal { get; set; }
+    public static string GeneratePartitionKey(string instrumentSymbol) => instrumentSymbol;
+    public static string GenerateRowKey(string tradeId) => tradeId;
+
+    public PortfolioTrade Trade { get; set; }
+
+    public static PortfolioTradeNoSql Create(PortfolioTrade trade)
+    {
+        return new SettingsLiquidityConverterNoSql()
+        {
+            PartitionKey = GeneratePartitionKey(trade.InstrumentSymbol),
+            RowKey = GenerateRowKey(trader.Id),
+            Trade = trade
+        };
+    }
 }
 ```
