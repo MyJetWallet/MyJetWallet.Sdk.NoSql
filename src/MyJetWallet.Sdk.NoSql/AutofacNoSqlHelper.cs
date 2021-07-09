@@ -17,7 +17,7 @@ namespace MyJetWallet.Sdk.NoSql
                 ApplicationEnvironment.HostName ??
                 $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
 
-            builder.RegisterInstance(myNoSqlClient).AsSelf().SingleInstance();
+            builder.RegisterInstance(myNoSqlClient).SingleInstance();
             builder
                 .Register(context =>
                 {
