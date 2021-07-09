@@ -7,28 +7,13 @@ public class ServiceBusModule : Module
 {
     protected override void Load(ContainerBuilder builder)
     {
-        var serviceBusClient = builder.RegisterMyServiceBusTcpClient(Program.ReloadedSettings(e => e.SpotServiceBusHostPort), ApplicationEnvironment.HostName, Program.LogFactory);
-
-        var queryName = "Liquidity-Reports";
-
-        // publisher
-        builder
-            .RegisterInstance(new MyServiceBusPublisher<PortfolioTrade>(serviceBusClient, PortfolioTrade.TopicName, true))
-            .As<IPublisher<PortfolioTrade>>()
-            .SingleInstance();
-
-
-        // batch subscriber
-        builder
-            .RegisterInstance(new MyServiceBusSubscriber<PortfolioTrade>(serviceBusClient, PortfolioTrade.TopicName, queryName, TopicQueueType.Permanent, true))
-            .As<ISubscriber<IReadOnlyList<PortfolioTrade>>>()
-            .SingleInstance();
-
-        // single subscriber
-        builder
-            .RegisterInstance(new MyServiceBusSubscriber<PortfolioPosition>(serviceBusClient, PortfolioPosition.TopicName, queryName, TopicQueueType.Permanent, false))
-            .As<ISubscriber<PortfolioTrade>>()
-            .SingleInstance();
+        var noSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
+        
+        // register writer (IMyNoSqlServerDataWriter<PortfolioTradeNoSql>)
+        builder.RegisterMyNoSqlWriter<PortfolioTradeNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), PortfolioTradeNoSql.TableName);
+        
+        // register reader (IMyNoSqlServerDataReader<PortfolioTradeNoSql>)
+        builder.RegisterMyNoSqlReader<PortfolioTradeNoSql>(noSqlClient, PortfolioTradeNoSql.TableName);
     }
 }
 ```
@@ -38,17 +23,17 @@ public class ServiceBusModule : Module
 ```csharp
 public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 {
-    private readonly MyServiceBusTcpClient[] _myServiceBusTcpClientManagers;
+    private readonly MyNoSqlTcpClient[] _myNoSqlTcpClientManagers;
 
-    public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, IMyNoSqlTcpClientManager[] myServiceBusTcpClientManagers)
+    public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, MyNoSqlTcpClient[] myNoSqlTcpClientManagers)
         : base(appLifetime)
     {
-        _myServiceBusTcpClientManagers = myServiceBusTcpClientManagers;
+        _myNoSqlTcpClientManagers = myNoSqlTcpClientManagers;
     }
 
     protected override void OnStarted()
     {
-        foreach(var client in _myServiceBusTcpClientManagers)
+        foreach(var client in _myNoSqlTcpClientManagers)
         {
             client.Start();
         }
@@ -56,7 +41,7 @@ public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 
     protected override void OnStopping()
     {
-        foreach(var client in _myServiceBusTcpClientManagers)
+        foreach(var client in _myNoSqlTcpClientManagers)
         {
             try
             {
@@ -74,13 +59,24 @@ public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 **Model:**
 
 ```csharp
-[DataContract]
-public class PortfolioTrade
-{
-    public const string TopicName = "spot-liquidity-engine-trade";
 
-    [DataMember(Order = 1)] public string TradeId { get; set; }
-    [DataMember(Order = 2)] public string Source { get; set; }
-    [DataMember(Order = 3)] public bool IsInternal { get; set; }
+public class PortfolioTradeNoSql : MyNoSqlDbEntity
+{
+    public const string TableName = "myjetwallet-liquitity-portfoliotrade";
+
+    public static string GeneratePartitionKey(string instrumentSymbol) => instrumentSymbol;
+    public static string GenerateRowKey(string tradeId) => tradeId;
+
+    public PortfolioTrade Trade { get; set; }
+
+    public static PortfolioTradeNoSql Create(PortfolioTrade trade)
+    {
+        return new SettingsLiquidityConverterNoSql()
+        {
+            PartitionKey = GeneratePartitionKey(trade.InstrumentSymbol),
+            RowKey = GenerateRowKey(trade.Id),
+            Trade = trade
+        };
+    }
 }
 ```
