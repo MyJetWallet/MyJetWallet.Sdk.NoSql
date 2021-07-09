@@ -38,22 +38,35 @@ public class ServiceBusModule : Module
 ```csharp
 public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
 {
-    private readonly MyServiceBusTcpClient _myServiceBusTcpClient;
+    private readonly MyServiceBusTcpClient[] _myServiceBusTcpClientManagers;
 
-    public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, MyServiceBusTcpClient myServiceBusTcpClient)
+    public ApplicationLifetimeManager(IHostApplicationLifetime appLifetime, IMyNoSqlTcpClientManager[] myServiceBusTcpClientManagers)
         : base(appLifetime)
     {
-        _myServiceBusTcpClient = myServiceBusTcpClient;
+        _myServiceBusTcpClientManagers = myServiceBusTcpClientManagers;
     }
 
     protected override void OnStarted()
     {
-        _myServiceBusTcpClient.Start();
+        foreach(var client in _myServiceBusTcpClientManagers)
+        {
+            client.Start();
+        }
     }
 
     protected override void OnStopping()
     {
-        _myServiceBusTcpClient.Stop();
+        foreach(var client in _myServiceBusTcpClientManagers)
+        {
+            try
+            {
+                client.Start();
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex)
+            }
+        }
     }
 }
 ```

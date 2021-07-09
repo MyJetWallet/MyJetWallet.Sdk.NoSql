@@ -1,5 +1,6 @@
 ﻿using System;
 using Autofac;
+using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
@@ -17,8 +18,21 @@ namespace MyJetWallet.Sdk.NoSql
                 $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
 
             builder.RegisterInstance(myNoSqlClient).AsSelf().SingleInstance();
-            builder.RegisterType<MyNoSqlTcpClientWatcher>().AutoActivate().SingleInstance();
+            builder
+                .Register(context =>
+                {
+                    var logger = context.Resolve<ILogger<MyNoSqlTcpClientWatcher>>();
+                    var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger);
+                    return watcher;
+                })
+                .As<IStartable>()
+                .AutoActivate()
+                .SingleInstance();
 
+            builder
+                .RegisterInstance(new MyNoSqlTcpClientManager(myNoSqlClient))
+                .As<IMyNoSqlTcpClientManager>()
+                .SingleInstance();
 
 
             return myNoSqlClient;
