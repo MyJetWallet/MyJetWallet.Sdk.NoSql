@@ -12,6 +12,7 @@ namespace MyJetWallet.Sdk.NoSql
         private readonly MyNoSqlTcpClient _myNoSqlTcpClient;
         private readonly ILogger<MyNoSqlTcpClientWatcher> _logger;
         private readonly MyTaskTimer _timer;
+        private DateTime _starTime;
 
         public MyNoSqlTcpClientWatcher(MyNoSqlTcpClient myNoSqlTcpClient, ILogger<MyNoSqlTcpClientWatcher> logger)
         {
@@ -23,11 +24,16 @@ namespace MyJetWallet.Sdk.NoSql
 
         public void Start()
         {
+            _starTime = DateTime.UtcNow;
             _timer.Start();
         }
 
         private Task Watch()
         {
+            if ((DateTime.UtcNow - _starTime).TotalSeconds < 30)
+                return Task.CompletedTask;
+
+
             if (!_myNoSqlTcpClient.Connected)
                 _logger.LogError("MyNoSqlTcpClient DO NOT CONNECTED, please start the client and validate url and connection");
 
