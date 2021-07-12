@@ -1,5 +1,4 @@
-﻿using MyJetWallet.Sdk.Service.Tools;
-using MyNoSqlServer.DataReader;
+﻿using MyNoSqlServer.DataReader;
 
 namespace MyJetWallet.Sdk.NoSql
 {

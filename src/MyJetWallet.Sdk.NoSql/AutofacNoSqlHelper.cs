@@ -34,6 +34,8 @@ namespace MyJetWallet.Sdk.NoSql
                 .As<IMyNoSqlTcpClientManager>()
                 .SingleInstance();
 
+            builder.RegisterType<MyNoSqlClientLifeTime>().AsSelf().SingleInstance();
+
 
             return myNoSqlClient;
         }
