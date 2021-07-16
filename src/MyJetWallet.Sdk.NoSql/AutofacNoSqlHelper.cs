@@ -48,6 +48,7 @@ namespace MyJetWallet.Sdk.NoSql
             builder
                 .RegisterInstance(writer)
                 .As<IMyNoSqlServerDataWriter<T>>()
+                .AutoActivate()
                 .SingleInstance();
 
             return writer;
@@ -60,6 +61,7 @@ namespace MyJetWallet.Sdk.NoSql
             builder
                 .RegisterInstance(reader)
                 .As<IMyNoSqlServerDataReader<T>>()
+                .AutoActivate()
                 .SingleInstance();
 
             return reader;
