@@ -49,7 +49,7 @@ public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex)
+                Console.WriteLine(ex);
             }
         }
     }
