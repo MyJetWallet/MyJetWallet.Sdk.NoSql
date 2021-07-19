@@ -45,7 +45,7 @@ public class ApplicationLifetimeManager : ApplicationLifetimeManagerBase
         {
             try
             {
-                client.Start();
+                client.Stop();
             }
             catch(Exception ex)
             {
