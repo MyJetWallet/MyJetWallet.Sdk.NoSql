@@ -55,8 +55,14 @@ namespace MyJetWallet.Sdk.NoSql
             return writer;
         }
 
+        public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder,
+            MyNoSqlTcpClient client, string tableName) where T : IMyNoSqlDbEntity, new()
+        {
+            var reader = builder.RegisterMyNoSqlReader<T>(client, tableName, NoSqlDataWaitMode.None);
+            return reader;
+        }
         public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, MyNoSqlTcpClient client, string tableName, 
-            NoSqlDataWaitMode waitDataOnStart = NoSqlDataWaitMode.None) where T : IMyNoSqlDbEntity, new()
+            NoSqlDataWaitMode waitDataOnStart) where T : IMyNoSqlDbEntity, new()
         {
             var reader = new MyNoSqlReadRepository<T>(client, tableName);
 
