@@ -1,15 +1,24 @@
 ﻿using System;
+using System.Linq;
+using System.Threading;
 using Autofac;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace MyJetWallet.Sdk.NoSql
 {
     public class MyNoSqlClientLifeTime: IStartable
     {
         private readonly IMyNoSqlTcpClientManager[] _clients;
+        private readonly INoSqlReaderCountDataGetter[] _countDataGetter;
+        private readonly ILogger<MyNoSqlClientLifeTime> _logger;
 
-        public MyNoSqlClientLifeTime(IMyNoSqlTcpClientManager[] clients)
+        public MyNoSqlClientLifeTime(IMyNoSqlTcpClientManager[] clients, INoSqlReaderCountDataGetter[] countDataGetter,
+            ILogger<MyNoSqlClientLifeTime> logger)
         {
             _clients = clients;
+            _countDataGetter = countDataGetter;
+            _logger = logger;
         }
 
         public void Start()
@@ -17,6 +26,55 @@ namespace MyJetWallet.Sdk.NoSql
             foreach (var client in _clients)
             {
                 client.Start();
+            }
+            
+            Console.WriteLine("Check and wait NoSql subscribers:");
+
+            var subscribers = _countDataGetter.ToList();
+            if (subscribers.Any())
+            {
+                Thread.Sleep(2000);
+            }
+
+            var iteration = 0;
+            while (subscribers.Any() && iteration < 10)
+            {
+                foreach (var subs in subscribers.ToArray())
+                {
+                    var (count, type, mode) = subs.CountEntities();
+                    if (count > 0 || mode == NoSqlDataWaitMode.None)
+                    {
+                        subscribers.Remove(subs);
+                        continue;
+                    }
+                    Console.WriteLine($"[{iteration}] subscriber to {type} is empty.");
+                }
+
+                if (subscribers.Any())
+                {
+                    iteration++;
+                    Console.WriteLine($"Wait data in nosql for 1 second");
+                    Thread.Sleep(1000);
+                }
+            }
+
+            var text = "";
+            foreach (var subs in subscribers)
+            {
+                var (count, type, mode) = subs.CountEntities();
+                if (count == 0 && mode == NoSqlDataWaitMode.WaitAndThrow)
+                {
+                    _logger.LogError("Cannot start application. NoSqlReader for {text} is empty", type);
+                    throw new Exception($"Cannot start application. NoSqlReader for {type} is empty");
+                }
+
+                if (count == 0 && mode == NoSqlDataWaitMode.WaitAndContinue)
+                    text += $", {type}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                _logger.LogError("!!! Start with not filled nosql data. Empty readers for: {text}", text);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
@@ -54,7 +55,8 @@ namespace MyJetWallet.Sdk.NoSql
             return writer;
         }
 
-        public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, MyNoSqlTcpClient client, string tableName) where T : IMyNoSqlDbEntity, new()
+        public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, MyNoSqlTcpClient client, string tableName, 
+            NoSqlDataWaitMode waitDataOnStart = NoSqlDataWaitMode.None) where T : IMyNoSqlDbEntity, new()
         {
             var reader = new MyNoSqlReadRepository<T>(client, tableName);
 
@@ -63,6 +65,14 @@ namespace MyJetWallet.Sdk.NoSql
                 .As<IMyNoSqlServerDataReader<T>>()
                 .AutoActivate()
                 .SingleInstance();
+
+            if (waitDataOnStart != NoSqlDataWaitMode.None)
+            {
+                Func<int> calc = () => reader.Get().Count;
+                var waiter = new NoSqlReaderCountDataGetter(calc, typeof(T).Name, waitDataOnStart);
+
+                builder.RegisterInstance(waiter).SingleInstance().As<INoSqlReaderCountDataGetter>();
+            }
 
             return reader;
         }
