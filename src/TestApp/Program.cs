@@ -9,7 +9,7 @@ namespace TestApp
     {
         static async Task Main(string[] args)
         {
-            var writer = new MyNoSqlServerDataWriter<TestEntity>(() => "http://192.168.1.80:5123", TestEntity.TableName, true);
+            var writer = new MyNoSqlServerDataWriter<TestEntity>(() => "http://192.168.70.80:5123", TestEntity.TableName, true);
 
             Console.WriteLine("print 0");
             await Print(writer);
