@@ -12,13 +12,18 @@ namespace MyJetWallet.Sdk.NoSql
         private readonly IMyNoSqlTcpClientManager[] _clients;
         private readonly INoSqlReaderCountDataGetter[] _countDataGetter;
         private readonly ILogger<MyNoSqlClientLifeTime> _logger;
+        private readonly MyNoSqlTcpClientWatcher _watcher;
 
-        public MyNoSqlClientLifeTime(IMyNoSqlTcpClientManager[] clients, INoSqlReaderCountDataGetter[] countDataGetter,
-            ILogger<MyNoSqlClientLifeTime> logger)
+        public MyNoSqlClientLifeTime(
+            IMyNoSqlTcpClientManager[] clients, 
+            INoSqlReaderCountDataGetter[] countDataGetter,
+            ILogger<MyNoSqlClientLifeTime> logger,
+            MyNoSqlTcpClientWatcher watcher)
         {
             _clients = clients;
             _countDataGetter = countDataGetter;
             _logger = logger;
+            _watcher = watcher;
         }
 
         public void Start()
@@ -76,6 +81,8 @@ namespace MyJetWallet.Sdk.NoSql
             {
                 _logger.LogError("!!! Start with not filled nosql data. Empty readers for: {text}", text);
             }
+            
+            _watcher.Start();
         }
 
         public void Stop()

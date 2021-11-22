@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
+using MyJetWallet.Sdk.Service.LivnesProbs;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 using MyNoSqlServer.DataWriter;
@@ -19,6 +20,7 @@ namespace MyJetWallet.Sdk.NoSql
                 $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
 
             builder.RegisterInstance(myNoSqlClient).SingleInstance();
+            
             builder
                 .Register(context =>
                 {
@@ -26,7 +28,8 @@ namespace MyJetWallet.Sdk.NoSql
                     var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger);
                     return watcher;
                 })
-                .As<IStartable>()
+                .AsSelf()
+                .As<ILivenessReporter>()
                 .AutoActivate()
                 .SingleInstance();
 
