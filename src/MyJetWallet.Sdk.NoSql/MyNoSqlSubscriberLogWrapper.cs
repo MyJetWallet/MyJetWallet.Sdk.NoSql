@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MyNoSqlServer.DataReader;
 
@@ -46,7 +47,13 @@ public class MyNoSqlSubscriberLogWrapper: IMyNoSqlSubscriber
         public void Action(IReadOnlyList<T> items)
         {
             Console.WriteLine($"[{_name}][{_tableName}]: init action, receive {items.Count}");
+            
+            var sw = new Stopwatch();
+            sw.Start();
             _initAction.Invoke(items);
+            sw.Stop();
+            
+            Console.WriteLine($"[{_name}][{_tableName}]: init action DONE ({sw.Elapsed})");
         }
     }
     
@@ -66,12 +73,21 @@ public class MyNoSqlSubscriberLogWrapper: IMyNoSqlSubscriber
         public void Action(string pk, IReadOnlyList<T> items)
         {
             Console.WriteLine($"[{_name}][{_tableName}]: init partition ({pk}), receive {items.Count}");
+
+            var sw = new Stopwatch();
+            sw.Start();
             _action.Invoke(pk, items);
+            sw.Stop();
+            
+            Console.WriteLine($"[{_name}][{_tableName}]: init partition ({pk}) DONE ({sw.Elapsed})");
         }
     }
     
     public class UpdateActionWrapper<T>
     {
+        public static bool LogStartEnabled { get; set; } = true;
+        public static bool LogStopEnabled { get; set; } = true;
+        
         private readonly string _name;
         private readonly string _tableName;
         private readonly Action<IReadOnlyList<T>> _action;
@@ -85,13 +101,21 @@ public class MyNoSqlSubscriberLogWrapper: IMyNoSqlSubscriber
         
         public void Action(IReadOnlyList<T> items)
         {
-            Console.WriteLine($"[{_name}][{_tableName}]: update, receive {items.Count}");
+            if (LogStartEnabled) Console.WriteLine($"[{_name}][{_tableName}]: update, receive {items.Count}");
+
+            var sw = new Stopwatch();
+            sw.Start();
             _action.Invoke(items);
+            sw.Stop();
+            
+            if (LogStopEnabled) Console.WriteLine($"[{_name}][{_tableName}]: update DONE ({sw.Elapsed})");
         }
     }
     
     public class DeleteActionsWrapper<T>
     {
+        public static bool LogEnabled { get; set; } = true;
+        
         private readonly string _name;
         private readonly string _tableName;
         private readonly Action<IEnumerable<(string partitionKey, string rowKey)>> _action;
@@ -106,8 +130,14 @@ public class MyNoSqlSubscriberLogWrapper: IMyNoSqlSubscriber
         public void Action(IEnumerable<(string partitionKey, string rowKey)> items)
         {
             var data = items.ToList();
-            Console.WriteLine($"[{_name}][{_tableName}]: delete, receive {data.Count()}");
+            if (LogEnabled) Console.WriteLine($"[{_name}][{_tableName}]: delete, receive {data.Count()}");
+
+            var sw = new Stopwatch();
+            sw.Start();
             _action.Invoke(data);
+            sw.Stop();
+            
+            if (LogEnabled) Console.WriteLine($"[{_name}][{_tableName}]: delete DONE ({sw.Elapsed})");
         }
     }
 }
