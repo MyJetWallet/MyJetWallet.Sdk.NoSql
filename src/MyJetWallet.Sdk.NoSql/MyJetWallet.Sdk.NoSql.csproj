@@ -9,7 +9,7 @@
     <PackageReference Include="Autofac" Version="6.3.0" />
     <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.1.7" />
     <PackageReference Include="MyNoSqlServer.DataReader" Version="1.4.4" />
-    <PackageReference Include="MyNoSqlServer.DataWriter" Version="1.6.1" />
+    <PackageReference Include="MyNoSqlServer.DataWriter" Version="1.4.4" />
   </ItemGroup>
 
 </Project>
