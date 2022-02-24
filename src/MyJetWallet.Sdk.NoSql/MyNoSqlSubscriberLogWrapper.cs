@@ -28,6 +28,7 @@ public class MyNoSqlSubscriberLogWrapper: IMyNoSqlSubscriber
         var update = new UpdateActionWrapper<T>(_name, tableName, updateAction);
         var delete = new DeleteActionsWrapper<T>(_name, tableName, deleteActions);
         
+        Console.WriteLine($"[{_name}][{tableName}]: subscribe");
         _client.Subscribe<T>(tableName, init.Action, initPk.Action, update.Action, delete.Action);
     }
 
