@@ -12,7 +12,7 @@ namespace MyJetWallet.Sdk.NoSql
 {
     public static class AutofacNoSqlHelper
     {
-        public static MyNoSqlTcpClient CreateNoSqlClient(this ContainerBuilder builder, Func<string> readerHostPort)
+        public static IMyNoSqlSubscriber CreateNoSqlClient(this ContainerBuilder builder, Func<string> readerHostPort)
         {
             var myNoSqlClient = new MyNoSqlTcpClient(
                 readerHostPort,
@@ -59,12 +59,12 @@ namespace MyJetWallet.Sdk.NoSql
         }
 
         public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder,
-            MyNoSqlTcpClient client, string tableName) where T : IMyNoSqlDbEntity, new()
+            IMyNoSqlSubscriber client, string tableName) where T : IMyNoSqlDbEntity, new()
         {
             var reader = builder.RegisterMyNoSqlReader<T>(client, tableName, NoSqlDataWaitMode.WaitAndContinue);
             return reader;
         }
-        public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, MyNoSqlTcpClient client, string tableName, 
+        public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, IMyNoSqlSubscriber client, string tableName, 
             NoSqlDataWaitMode waitDataOnStart) where T : IMyNoSqlDbEntity, new()
         {
             var reader = new MyNoSqlReadRepository<T>(client, tableName);
