@@ -6,7 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MyNoSqlServer20.DataWriter" Version="1.7.1" />
+      <PackageReference Include="MyNoSqlServer.DataReader" Version="1.7.2" />
+      <PackageReference Include="MyNoSqlServer.DataWriter" Version="1.7.2" />
     </ItemGroup>
 
 </Project>

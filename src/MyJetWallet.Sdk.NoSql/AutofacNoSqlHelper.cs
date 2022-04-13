@@ -5,7 +5,7 @@ using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.Service.LivnesProbs;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
-using MyNoSqlServer20.DataWriter;
+using MyNoSqlServer.DataWriter;
 
 namespace MyJetWallet.Sdk.NoSql
 {
