@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service;
 using MyJetWallet.Sdk.Service.LivnesProbs;
 using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
-using MyNoSqlServer.DataWriter;
+using MyNoSqlServer20.DataWriter;
 
 namespace MyJetWallet.Sdk.NoSql
 {

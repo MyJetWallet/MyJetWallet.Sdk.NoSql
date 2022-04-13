@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using MyNoSqlServer.Abstractions;
-using MyNoSqlServer.DataWriter;
+using MyNoSqlServer20.DataWriter;
 
 namespace TestApp
 {
