@@ -42,6 +42,46 @@ namespace MyJetWallet.Sdk.NoSql
 
             return myNoSqlClient;
         }
+        
+        public static IMyNoSqlSubscriber CreateNoSqlClient(
+            this ContainerBuilder builder, 
+            string readerHostPort,
+            ILoggerFactory loggerFactory,
+            string clientName)
+        {
+            var myNoSqlTcpClientLogger = loggerFactory.CreateLogger<MyNoSqlTcpClient>();
+            
+            var myNoSqlClient = new MyNoSqlTcpClient(
+                () => readerHostPort,
+                ApplicationEnvironment.HostName ??
+                $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
+            
+            myNoSqlClient.AddLogger(myNoSqlTcpClientLogger, clientName);
+
+            builder.RegisterInstance(myNoSqlClient).SingleInstance();
+            
+            builder
+                .Register(context =>
+                {
+                    var logger = context.Resolve<ILogger<MyNoSqlTcpClientWatcher>>();
+                    var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger);
+                    return watcher;
+                })
+                .AsSelf()
+                .As<ILivenessReporter>()
+                .AutoActivate()
+                .SingleInstance();
+
+            builder
+                .RegisterInstance(new MyNoSqlTcpClientManager(myNoSqlClient))
+                .As<IMyNoSqlTcpClientManager>()
+                .SingleInstance();
+
+            builder.RegisterType<MyNoSqlClientLifeTime>().AsSelf().SingleInstance();
+
+
+            return myNoSqlClient;
+        }
 
         public static IMyNoSqlServerDataWriter<T> RegisterMyNoSqlWriter<T>(this ContainerBuilder builder, Func<string> writerUrl, string tableName, bool persist = true, 
             DataSynchronizationPeriod dataSynchronizationPeriod = DataSynchronizationPeriod.Sec5) where T: IMyNoSqlDbEntity, new()
@@ -63,6 +103,7 @@ namespace MyJetWallet.Sdk.NoSql
             var reader = builder.RegisterMyNoSqlReader<T>(client, tableName, NoSqlDataWaitMode.WaitAndContinue);
             return reader;
         }
+        
         public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, IMyNoSqlSubscriber client, string tableName, 
             NoSqlDataWaitMode waitDataOnStart) where T : IMyNoSqlDbEntity, new()
         {
