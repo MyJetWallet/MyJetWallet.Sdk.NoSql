@@ -79,7 +79,7 @@ namespace MyJetWallet.Sdk.NoSql
 
             if (!string.IsNullOrWhiteSpace(text))
             {
-                _logger.LogError("!!! Start with not filled nosql data. Empty readers for: {text}", text);
+                _logger.LogWarning("!!! Start with not filled nosql data. Empty readers for: {text}", text);
             }
             
             _watcher.Start();
