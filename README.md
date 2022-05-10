@@ -7,7 +7,7 @@ public class ServiceBusModule : Module
 {
     protected override void Load(ContainerBuilder builder)
     {
-        var noSqlClient = builder.CreateNoSqlClient(Program.ReloadedSettings(e => e.MyNoSqlReaderHostPort));
+        var noSqlClient = builder.CreateNoSqlClient(Program.Settings.MyNoSqlReaderHostPort, Program.LoggerFactory);
         
         // register writer (IMyNoSqlServerDataWriter<PortfolioTradeNoSql>)
         builder.RegisterMyNoSqlWriter<PortfolioTradeNoSql>(Program.ReloadedSettings(e => e.MyNoSqlWriterUrl), PortfolioTradeNoSql.TableName);
