@@ -11,7 +11,7 @@ namespace MyJetWallet.Sdk.NoSql
 {
     public static class AutofacNoSqlHelper
     {
-        public static IMyNoSqlSubscriber CreateNoSqlClient(this ContainerBuilder builder, Func<string> readerHostPort)
+        public static IMyNoSqlSubscriber CreateNoSqlClientOld(this ContainerBuilder builder, Func<string> readerHostPort)
         {
             var myNoSqlClient = new MyNoSqlTcpClient(
                 readerHostPort,
