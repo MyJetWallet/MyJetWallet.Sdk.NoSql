@@ -110,7 +110,14 @@ namespace MyJetWallet.Sdk.NoSql
         public static IMyNoSqlServerDataReader<T> RegisterMyNoSqlReader<T>(this ContainerBuilder builder, IMyNoSqlSubscriber client, string tableName, 
             NoSqlDataWaitMode waitDataOnStart) where T : IMyNoSqlDbEntity, new()
         {
-            var reader = new MyNoSqlReadRepository<T>(client, tableName);
+            ILogger<MyNoSqlReadRepository<T>> logger = null;
+
+            if (LogConfigurator.LoggerFactoryInstance != null)
+            {
+                logger = LogConfigurator.LoggerFactoryInstance.CreateLogger<MyNoSqlReadRepository<T>>();
+            }
+            
+            var reader = new MyNoSqlReadRepository<T>(client, tableName, logger);
 
             builder
                 .RegisterInstance(reader)
