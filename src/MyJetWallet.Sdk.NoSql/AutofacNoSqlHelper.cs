@@ -49,15 +49,24 @@ namespace MyJetWallet.Sdk.NoSql
             ILoggerFactory loggerFactory,
             string nosqlClientName="")
         {
-            if (string.IsNullOrEmpty(nosqlClientName))
-                nosqlClientName = "nosqlClient";
+            
             
             var myNoSqlTcpClientLogger = loggerFactory.CreateLogger<MyNoSqlTcpClient>();
+
+            var appName = ApplicationEnvironment.HostName ??
+                          $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}";
+
+            if (string.IsNullOrEmpty(nosqlClientName))
+            {
+                nosqlClientName = "nosqlClient";
+            }
+            else
+            {
+                appName += $"[{nosqlClientName}]";
+            }
             
-            var myNoSqlClient = new MyNoSqlTcpClient(
-                () => readerHostPort,
-                ApplicationEnvironment.HostName ??
-                $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
+            
+            var myNoSqlClient = new MyNoSqlTcpClient(() => readerHostPort, appName);
             
             myNoSqlClient.AddLogger(myNoSqlTcpClientLogger, nosqlClientName);
 
