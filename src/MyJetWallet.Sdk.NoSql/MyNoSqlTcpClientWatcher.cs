@@ -9,7 +9,12 @@ using MyNoSqlServer.DataReader;
 
 namespace MyJetWallet.Sdk.NoSql
 {
-    public class MyNoSqlTcpClientWatcher : IStartable, IDisposable, ILivenessReporter
+    public interface IMyNoSqlTcpClientWatcher
+    {
+        void Start();
+    }
+    
+    public class MyNoSqlTcpClientWatcher : IDisposable, ILivenessReporter, IMyNoSqlTcpClientWatcher
     {
         private readonly MyNoSqlTcpClient _myNoSqlTcpClient;
         private readonly ILogger<MyNoSqlTcpClientWatcher> _logger;

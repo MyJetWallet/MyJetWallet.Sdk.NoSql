@@ -79,9 +79,8 @@ namespace MyJetWallet.Sdk.NoSql
                     var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger);
                     return watcher;
                 })
-                .AsSelf()
+                .As<IMyNoSqlTcpClientWatcher>()
                 .As<ILivenessReporter>()
-                .AutoActivate()
                 .SingleInstance();
 
             builder
