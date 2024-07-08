@@ -12,13 +12,13 @@ namespace MyJetWallet.Sdk.NoSql
         private readonly IMyNoSqlTcpClientManager[] _clients;
         private readonly INoSqlReaderCountDataGetter[] _countDataGetter;
         private readonly ILogger<MyNoSqlClientLifeTime> _logger;
-        private readonly MyNoSqlTcpClientWatcher[] _watcher;
+        private readonly IMyNoSqlTcpClientWatcher[] _watcher;
 
         public MyNoSqlClientLifeTime(
             IMyNoSqlTcpClientManager[] clients, 
             INoSqlReaderCountDataGetter[] countDataGetter,
             ILogger<MyNoSqlClientLifeTime> logger,
-            MyNoSqlTcpClientWatcher[] watcher)
+            IMyNoSqlTcpClientWatcher[] watcher)
         {
             _clients = clients;
             _countDataGetter = countDataGetter;
