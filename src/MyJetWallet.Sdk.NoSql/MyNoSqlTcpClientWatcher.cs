@@ -5,6 +5,7 @@ using Autofac;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.Service.LivnesProbs;
 using MyJetWallet.Sdk.Service.Tools;
+using MyNoSqlServer.Abstractions;
 using MyNoSqlServer.DataReader;
 
 namespace MyJetWallet.Sdk.NoSql
@@ -19,29 +20,32 @@ namespace MyJetWallet.Sdk.NoSql
         private readonly MyNoSqlTcpClient _myNoSqlTcpClient;
         private readonly ILogger<MyNoSqlTcpClientWatcher> _logger;
         private readonly MyTaskTimer _timer;
-        private DateTime _starTime;
+        private readonly IMyNoSqlServerDataReader<LivenessNoSqlEntity> _livenessReader;
+        private DateTime _startTime;
 
         private DateTime? _lastLossConnect = null;
+        // private DateTime? _lastConnectedAt = null;
 
-        public MyNoSqlTcpClientWatcher(MyNoSqlTcpClient myNoSqlTcpClient, ILogger<MyNoSqlTcpClientWatcher> logger)
+        public MyNoSqlTcpClientWatcher(MyNoSqlTcpClient myNoSqlTcpClient, ILogger<MyNoSqlTcpClientWatcher> logger, IMyNoSqlServerDataReader<LivenessNoSqlEntity> livenessReader)
         {
             _myNoSqlTcpClient = myNoSqlTcpClient;
             _logger = logger;
+            _livenessReader = livenessReader;
 
             _timer = new MyTaskTimer(nameof(MyNoSqlTcpClientWatcher), TimeSpan.FromSeconds(10), logger, Watch);
         }
 
         public void Start()
         {
-            _starTime = DateTime.UtcNow;
+            _startTime = DateTime.UtcNow;
             _timer.Start();
         }
 
         private Task Watch()
         {
-            if ((DateTime.UtcNow - _starTime).TotalSeconds < 30)
+            if ((DateTime.UtcNow - _startTime).TotalSeconds < 30)
                 return Task.CompletedTask;
-
+            
             if (!_myNoSqlTcpClient.Connected)
             {
                 _logger.LogError("MyNoSqlTcpClient DO NOT CONNECTED, please start the client and validate url and connection");
@@ -52,6 +56,16 @@ namespace MyJetWallet.Sdk.NoSql
             {
                 _lastLossConnect = null;
             }
+            
+            var probe = _livenessReader.Get(LivenessNoSqlEntity.GeneratePartitionKey(), LivenessNoSqlEntity.GenerateRowKey());
+
+            if (probe.LastUpde < DateTime.UtcNow.AddSeconds(-180))
+            {
+                _logger.LogError("Liveness probe is too old. Last update: {time}", probe.LastUpde);
+                _myNoSqlTcpClient.ReCreateAndStart();
+                _startTime = DateTime.UtcNow;
+                return Task.CompletedTask;
+            }       
 
             return Task.CompletedTask;
         }
@@ -64,7 +78,7 @@ namespace MyJetWallet.Sdk.NoSql
 
         public (string, List<string>) GetIssues()
         {
-            if ((DateTime.UtcNow - _starTime).TotalSeconds < 30)
+            if ((DateTime.UtcNow - _startTime).TotalSeconds < 30)
                 return ("MyNoSqlTcpClientWatcher", new List<string>());
 
             var ts = _lastLossConnect;

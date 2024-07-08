@@ -19,12 +19,13 @@ namespace MyJetWallet.Sdk.NoSql
                 $"{ApplicationEnvironment.AppName}:{ApplicationEnvironment.AppVersion}");
 
             builder.RegisterInstance(myNoSqlClient).SingleInstance();
-            
+            var subscriber = builder.RegisterMyNoSqlReader<LivenessNoSqlEntity>(myNoSqlClient, LivenessNoSqlEntity.TableName, NoSqlDataWaitMode.WaitAndContinue);
+
             builder
                 .Register(context =>
                 {
                     var logger = context.Resolve<ILogger<MyNoSqlTcpClientWatcher>>();
-                    var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger);
+                    var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger, subscriber);
                     return watcher;
                 })
                 .AsSelf()
@@ -72,11 +73,13 @@ namespace MyJetWallet.Sdk.NoSql
 
             builder.RegisterInstance(myNoSqlClient).SingleInstance();
             
+            var subscriber = builder.RegisterMyNoSqlReader<LivenessNoSqlEntity>(myNoSqlClient, LivenessNoSqlEntity.TableName, NoSqlDataWaitMode.WaitAndContinue);
+            
             builder
                 .Register(context =>
                 {
                     var logger = context.Resolve<ILogger<MyNoSqlTcpClientWatcher>>();
-                    var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger);
+                    var watcher = new MyNoSqlTcpClientWatcher(myNoSqlClient, logger, subscriber);
                     return watcher;
                 })
                 .As<IMyNoSqlTcpClientWatcher>()
@@ -89,8 +92,7 @@ namespace MyJetWallet.Sdk.NoSql
                 .SingleInstance();
 
             builder.RegisterType<MyNoSqlClientLifeTime>().AsSelf().SingleInstance();
-
-
+            
             return myNoSqlClient;
         }
 
