@@ -43,13 +43,12 @@ namespace MyJetWallet.Sdk.NoSql
 
         private Task Watch()
         {
-            _logger.LogInformation("MyNoSqlTcpClientWatcher started");
+            _logger.LogInformation("MyNoSqlTcpClientWatcher started. Client {connectionId}", _myNoSqlTcpClient.ConnectionId);
             if ((DateTime.UtcNow - _startTime).TotalSeconds < 30)
                 return Task.CompletedTask;
             
             if (!_myNoSqlTcpClient.Connected)
             {
-                Console.WriteLine("MyNoSqlTcpClientWatcher: DO NOT CONNECTED, please start the client and validate url and connection");
                 _logger.LogError("MyNoSqlTcpClient IS NOT CONNECTED, please start the client and validate url and connection");
                 
                 _lastLossConnect ??= DateTime.UtcNow;
@@ -62,7 +61,7 @@ namespace MyJetWallet.Sdk.NoSql
             var probe = _livenessReader.Get(LivenessNoSqlEntity.GeneratePartitionKey(), LivenessNoSqlEntity.GenerateRowKey());
             if (probe.LastUpde < DateTime.UtcNow.AddSeconds(-180))
             {
-                _logger.LogError("Liveness probe is too old. Last update: {time}", probe.LastUpde);
+                _logger.LogError("MyNoSqlTcpClient LOST CONNECTION, client will be recreated. Last update: {time}", probe.LastUpde);
                 _myNoSqlTcpClient.ReCreateAndStart();
                 _startTime = DateTime.UtcNow;
             }       
