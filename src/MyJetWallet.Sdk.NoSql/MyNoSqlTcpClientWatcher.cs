@@ -13,6 +13,8 @@ namespace MyJetWallet.Sdk.NoSql
     public interface IMyNoSqlTcpClientWatcher
     {
         void Start();
+        void Restart();
+        DateTime GetLastUpdate();
     }
     
     public class MyNoSqlTcpClientWatcher : IDisposable, ILivenessReporter, IMyNoSqlTcpClientWatcher
@@ -41,6 +43,18 @@ namespace MyJetWallet.Sdk.NoSql
         {
             _startTime = DateTime.UtcNow;
             _timer.Start();
+        }
+
+        public void Restart()
+        {
+            _myNoSqlTcpClient.ReCreateAndStart();
+            _startTime = DateTime.UtcNow;
+        }
+
+        public DateTime GetLastUpdate()
+        {
+            var probe = _livenessReader.Get(LivenessNoSqlEntity.GeneratePartitionKey(), LivenessNoSqlEntity.GenerateRowKey());
+            return probe.LastUpde;
         }
 
         private Task Watch()
