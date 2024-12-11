@@ -37,6 +37,7 @@ namespace MyJetWallet.Sdk.NoSql
             _livenessReader = livenessReader;
 
             _timer = new MyTaskTimer(nameof(MyNoSqlTcpClientWatcher), TimeSpan.FromSeconds(10), logger, Watch);
+            _timer.IsTelemetryActive = false;
         }
 
         public void Start()
