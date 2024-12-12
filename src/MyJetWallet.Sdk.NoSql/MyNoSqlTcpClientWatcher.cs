@@ -55,7 +55,7 @@ namespace MyJetWallet.Sdk.NoSql
         public DateTime GetLastUpdate()
         {
             var probe = _livenessReader.Get(LivenessNoSqlEntity.GeneratePartitionKey(), LivenessNoSqlEntity.GenerateRowKey());
-            return probe.LastUpde;
+            return probe?.LastUpde ?? DateTime.MinValue;
         }
 
         private Task Watch()
@@ -74,7 +74,7 @@ namespace MyJetWallet.Sdk.NoSql
             }
             
             var probe = _livenessReader.Get(LivenessNoSqlEntity.GeneratePartitionKey(), LivenessNoSqlEntity.GenerateRowKey());
-            if (probe.LastUpde < DateTime.UtcNow - LivenessProbeTimeout)
+            if (probe != null && probe.LastUpde < DateTime.UtcNow - LivenessProbeTimeout)
             {
                 _logger.LogError("MyNoSqlTcpClient LOST CONNECTION, client will be recreated. Last update: {time}", probe.LastUpde);
                 _myNoSqlTcpClient.ReCreateAndStart();
